@@ -627,6 +627,28 @@
      JAVASCRIPT
 ════════════════════════════════════ -->
     <script>
+        async function apiFetch(url, options = {}) {
+
+                const token = localStorage.getItem("jwt_token");
+
+                const res = await fetch(url, {
+                    ...options,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                        ...(options.headers || {})
+                    }
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    throw new Error(data.error || "API error");
+                }
+
+                return data;
+            }
+
         /* ── STATE ── */
         const API = '';           // ใช้ relative URL (Nginx จัดการ)
         let token = localStorage.getItem('jwt_token');
@@ -697,20 +719,35 @@
        TASKS — LOAD & RENDER
     ───────────────────────────────────── */
     async function loadTasks() {
-        const res = await apiFetch(`${API}/api/tasks/`, { headers: authHeaders() });
-        const data = await res.json();
 
-        if (!res.ok) {
-            if (res.status === 401) { toast('Session หมดอายุ กรุณา Login ใหม่', 'error'); doLogout(); }
-            return;
+        const list = document.getElementById("task-list");
+        if (!list) return;
+
+        try {
+
+            const res = await apiFetch("/api/tasks/");
+            const tasks = res.tasks || [];
+
+            allTasks = tasks;   // ⭐ สำคัญ
+
+            renderTasks();
+            updateStats();
+
+            const count = document.getElementById("task-count");
+            if (count) count.textContent = tasks.length;
+
+        } catch (err) {
+
+            console.error("loadTasks error:", err);
+
+            list.innerHTML = `
+        <div class="empty-state">
+            <div class="emoji">⚠️</div>
+            <p>โหลด Tasks ไม่สำเร็จ</p>
+        </div>
+        `;
         }
-
-        allTasks = data.tasks || [];
-        updateStats();
-        renderTasks();
-        document.getElementById('task-count').textContent = allTasks.length;
     }
-
     function updateStats() {
         const todo = allTasks.filter(t => t.status === 'TODO').length;
         const inprog = allTasks.filter(t => t.status === 'IN_PROGRESS').length;
@@ -895,8 +932,7 @@
        PROFILE
     ───────────────────────────────────── */
     async function loadProfile() {
-        const res = await apiFetch(`${API}/api/users/me`, { headers: authHeaders() });
-        const data = await res.json();
+        const data = await apiFetch(`${API}/api/users/me`);
         const u = data.user || currentUser;
         if (!u) return;
 
@@ -978,6 +1014,12 @@
                 else { localStorage.removeItem('jwt_token'); token = null; }
             })();
         }
+        function authHeaders() {
+                return {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
+                };
+            }
     </script>
 </body>
 
