@@ -63,11 +63,12 @@ CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
 --    node -e "const b=require('bcryptjs'); console.log(b.hashSync('bob456',10))"
 --    node -e "const b=require('bcryptjs'); console.log(b.hashSync('adminpass',10))"
 -- ═══════════════════════════════════════════════
+TRUNCATE tasks, users RESTART IDENTITY CASCADE;
 
 INSERT INTO users (username, email, password_hash, role) VALUES
-  ('alice', 'alice@lab.local', '$2b$10$7sGQ5vQn2r2r8gF0cQ8Y2eWq7o7v2G0VY9n1s8P4X0rK6sKJ7QK2S', 'member'),
-  ('bob',   'bob@lab.local',   '$2b$10$9hK0a5ZkM8L2fF7sQ0p5p.OeKc6YcF6nV8YtZ8X1k2P4v3hQ2Rk7m',   'member'),
-  ('admin', 'admin@lab.local', '$2b$10$1T2gq1m3QbXc7zQ8p9V2d.uR7m8K5hS0bWf6Lk2M3pQ8v1J4nX6yC','admin')
+  ('alice', 'alice@lab.local', '$2b$10$pmOtOm7IrLYCLOjcPl8w7uvMSupOBtgolyRZk9lT/bTn4VQkKaApW', 'member'),
+  ('bob',   'bob@lab.local',   '$2b$10$y.hTCYEN.9/IXm1wsFwBMeAVdOvdpbO26btlhoTQ0OCrJajijORBG',   'member'),
+  ('admin', 'admin@lab.local', '$2b$10$/z/arOu42nfBFdZMajUmk.7adCUrH5tf1UaZGcKQP315vSL4WOd06','admin')
 ON CONFLICT (username) DO UPDATE SET
   email = EXCLUDED.email,
   password_hash = EXCLUDED.password_hash,
